@@ -1,7 +1,14 @@
+# Author - pawelzwronek
+# Description - Disables gestures so you can use RMB to pan and orbit the viewport
+
+# Changelog
+# v1.0 - Initial version
+
 import math
 import threading
 import subprocess
-import os, sys
+import os
+import sys
 import datetime
 import traceback
 import tkinter as tk
