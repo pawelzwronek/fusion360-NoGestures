@@ -105,7 +105,7 @@ def block_mouse_move(block):
 
 
 def GetKeyState(key):
-    return windll.user32.GetKeyState(ph.HookConstants.VKeyToID(key))
+    return windll.user32.GetKeyState(ph.HookConstants.VKeyToID(key)) & 0x8000
 
 def MouseGetPos():
     # // Returns OK or FAIL.
