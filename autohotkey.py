@@ -107,6 +107,14 @@ def block_mouse_move(block):
 def GetKeyState(key):
     return windll.user32.GetKeyState(ph.HookConstants.VKeyToID(key)) & 0x8000
 
+def SetKeyState(key, state):
+    KEYEVENTF_EXTENDEDKEY = 0x0001
+    KEYEVENTF_KEYUP = 0x0002
+    if state: state = 0
+    else:     state = KEYEVENTF_KEYUP
+    key1 = ph.HookConstants.VKeyToID(key)
+    windll.user32.keybd_event(key1, windll.user32.MapVirtualKeyA(key1, 0), state , 0)
+
 def MouseGetPos():
     # // Returns OK or FAIL.
     # 	// Caller should already have ensured that at least one of these will be non-NULL.

@@ -4,9 +4,9 @@
 	"id":	"",
 	"author":	"pawelzwronek",
 	"description":	{
-		"":	""
+		"":	"Disables gestures so you can use RMB to pan and orbit the viewport"
 	},
-	"version":	"1.0",
+	"version":	"1.1",
 	"runOnStartup":	false,
 	"supportedOS":	"windows",
 	"editEnabled":	true

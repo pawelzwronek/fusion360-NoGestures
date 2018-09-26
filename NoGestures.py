@@ -3,6 +3,8 @@
 
 # Changelog
 # v1.0 - Initial version
+# v1.1 - fix GetKeyState() on Win7
+#      - merge with NoGesturesNoShift
 
 import math
 import threading
@@ -16,6 +18,7 @@ import time
 
 logToFile = False
 logToConsole = False
+rmbAsOrbit = False
 
 boot = 'boot'
 if len(sys.argv) > 1:
@@ -29,7 +32,7 @@ _tmpPath =None
 
 def log(msg):
     global boot, _tmpPath, logToConsole, logToFile
-    if logToFile or logToFile:
+    if logToFile or logToConsole:
         fracSecs = time.time()
         fracSecs = int((fracSecs - int(fracSecs))*1000)
         msg = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.{:03}:".format(fracSecs)) + boot + ' ' + str(msg)
@@ -88,6 +91,7 @@ detecting_move = False
 move_detected = False
 inFusion = False
 rbutton_down = False
+shift_pressed = False
 
 
 def is_in_fusion():
@@ -116,7 +120,7 @@ def detect_move(start=-1):
 
 
 def RButton(event):
-    global rbutton_down
+    global rbutton_down, rmbAsOrbit, shift_pressed
     try:
         if not event.Injected:
             if is_in_fusion():
@@ -125,6 +129,12 @@ def RButton(event):
                 fire_in(ahk.MUp, 0)
                 fire_in(ahk.MDown, 10)
                 detect_move(True)
+                shift_pressed = ahk.GetKeyState('VK_LSHIFT')
+                if rmbAsOrbit:
+                    if not shift_pressed:
+                        ahk.SetKeyState('VK_LSHIFT', True) # press SHIFT key
+                    else:
+                        fire_in(ahk.MUp, 20)
                 return False  # block event
             else:
                 log('rdown ')
@@ -134,21 +144,24 @@ def RButton(event):
 
 
 def RButtonup(event):
-    global rbutton_down, move_detected
+    global rbutton_down, move_detected, shift_pressed
     try:
         if not event.Injected:
             if rbutton_down:
                 log('rup')
                 rbutton_down = False
                 detect_move(False)
+                if rmbAsOrbit:
+                    ahk.SetKeyState('VK_LSHIFT', False) # release SHIFT key
+                
                 if not move_detected:
-                    if ahk.GetKeyState('VK_LSHIFT') & (~1):
+                    if not rmbAsOrbit and shift_pressed:
                         log('no move, shift')
                         fire_in(ahk.MDown, 0)
                         fire_in(ahk.MUp, 10)
                         ahk.block_mouse_move(True)
                         fire_in(ahk.block_mouse_move, 100, {False})
-                    else:
+                    elif not shift_pressed:
                         log('no move, no shift')
                         fire_in(ahk.MUp, 0)
                         fire_in(ahk.RDown, 10)
@@ -157,6 +170,12 @@ def RButtonup(event):
                         fire_in(ahk.block_mouse_move, 300, {False})
                 else:
                     fire_in(ahk.MUp, 50)
+
+                        # fire_in(ahk.MUp, 0)
+                        # fire_in(ahk.MDown, 400)
+                        # fire_in(ahk.MUp, 420)
+                        # fire_in(ahk.SetKeyState, 430, ars=['VK_LSHIFT', False]) # release SHIFT key
+
                 return False  # block event
     except Exception:
         log(traceback.format_exc())
