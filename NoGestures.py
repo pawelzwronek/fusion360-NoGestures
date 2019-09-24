@@ -5,6 +5,7 @@
 # v1.0 - Initial version
 # v1.1 - fix GetKeyState() on Win7
 #      - merge with NoGesturesNoShift
+# v1.2 - build for python 3.7
 
 import math
 import threading

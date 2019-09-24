@@ -1,1 +1,1 @@
-C:\Users\P\AppData\Local\Autodesk\webdeploy\shared\PYTHON\3.5.3c\WIN64\Python\python.exe NoGestures.py
+C:\Users\p\AppData\Local\Autodesk\webdeploy\production\8fc78e02ada35f7bfe8c61944f4c29231b2e06ab\Python\python.exe NoGestures.py
