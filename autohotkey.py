@@ -142,7 +142,10 @@ def getClassUnderMouse():
     child_under_cursor = windll.user32.WindowFromPoint(POINT(*(GetCursorPos())))
     buff = ctypes.create_unicode_buffer(512)
     windll.user32.GetClassNameW(child_under_cursor, buff, 510)
-    return str(buff.value)
+
+    buff2 = ctypes.create_unicode_buffer(512)
+    windll.user32.GetWindowTextW(child_under_cursor, buff2, 510)
+    return str(buff.value) + ':' + str(buff2.value)
 
 
 oleacc = oledll.oleacc
