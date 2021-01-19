@@ -52,8 +52,9 @@ hm.MouseMove = onMouseMove
 
 def setOnRButton(func):
     hm.MouseRightDown = func
-    # hm.HookMouse()
 
+def setOnMButton(func):
+    hm.MouseMiddleDown = func
 
 def hookMouse():
     hm.HookMouse()
@@ -61,8 +62,9 @@ def hookMouse():
 
 def setOnRButtonUp(func):
     hm.MouseRightUp = func
-    # hm.HookMouse()
 
+def setOnMButtonUp(func):
+    hm.MouseMiddleUp = func
 
 def setOnAllMouse(func):
     global onMouseAll

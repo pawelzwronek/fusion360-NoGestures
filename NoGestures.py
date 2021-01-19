@@ -7,6 +7,7 @@
 #      - merge with NoGesturesNoShift
 # v1.2 - build for python 3.7
 # v1.3 - fix for Fusion360 v2.0.8609 - June 2020 Update
+# v1.4-beta - add switchRMB_MMB bool to remap RMB as MMB and MMB as RMB
 
 import math
 import threading
@@ -18,9 +19,12 @@ import traceback
 import tkinter as tk
 import time
 
+rmbAsOrbit = False # exclusive with switchRMB_MMB
+switchRMB_MMB = False  # exclusive with rmbAsOrbit
+
+
 logToFile = False
 logToConsole = False
-rmbAsOrbit = False
 
 boot = 'boot'
 if len(sys.argv) > 1:
@@ -92,6 +96,7 @@ detecting_move = False
 move_detected = False
 inFusion = False
 rbutton_down = False
+mbutton_down = False
 shift_pressed = False
 
 
@@ -121,17 +126,13 @@ def detect_move(start=-1):
             fire_in(detect_move, 100)
 
 
-def RButton(event):
-    global rbutton_down, rmbAsOrbit, shift_pressed
+def RButton1(event):
     try:
         if not event.Injected:
             if is_in_fusion():
                 log('rdown inFusion')
-                rbutton_down = True
                 fire_in(ahk.MDown, 20)
-                detect_move(True)
-                shift_pressed = ahk.GetKeyState('VK_LSHIFT')
-                if rmbAsOrbit:
+                if rmbAsOrbit or switchRMB_MMB:
                     if not shift_pressed:
                         ahk.SetKeyState('VK_LSHIFT', True) # press SHIFT key
                     else:
@@ -144,42 +145,112 @@ def RButton(event):
     return True  # pass event to next hook
 
 
-def RButtonup(event):
-    global rbutton_down, move_detected, shift_pressed
+def RButtonup1(event):
     try:
         if not event.Injected:
-            if rbutton_down:
-                log('rup')
-                rbutton_down = False
-                detect_move(False)
-                if rmbAsOrbit:
-                    ahk.SetKeyState('VK_LSHIFT', False) # release SHIFT key
-                
-                if not move_detected:
-                    if not rmbAsOrbit and shift_pressed:
-                        log('no move, shift')
-                        ahk.block_mouse_move(True)
-                        fire_in(ahk.MUp, 10)
-                        fire_in(ahk.block_mouse_move, 100, {False})
-                    elif not shift_pressed:
-                        log('no move, no shift')
-                        ahk.block_mouse_move(True)
-                        ahk.MUp()
-                        ahk.RDown()
-                        fire_in(ahk.RUp, 50)
-                        fire_in(ahk.block_mouse_move, 300, {False})
-                else:
-                    fire_in(ahk.MUp, 50)
+            if rmbAsOrbit or switchRMB_MMB:
+                ahk.SetKeyState('VK_LSHIFT', False) # release SHIFT key
+            
+            if move_detected:
+                fire_in(ahk.MUp, 50)
+            else:
+                log('no move')
+                if (not rmbAsOrbit or not switchRMB_MMB) and shift_pressed:
+                    log('no move, shift')
+                    ahk.block_mouse_move(True)
+                    fire_in(ahk.MUp, 10)
+                    fire_in(ahk.block_mouse_move, 100, {False})
+                elif switchRMB_MMB:
+                    fire_in(ahk.MUp, 20)
 
-                        # fire_in(ahk.MUp, 0)
-                        # fire_in(ahk.MDown, 400)
-                        # fire_in(ahk.MUp, 420)
-                        # fire_in(ahk.SetKeyState, 430, ars=['VK_LSHIFT', False]) # release SHIFT key
-
-                return False  # block event
+            return False  # block event
     except Exception:
         log(traceback.format_exc())
     return True  # pass event to next hook
+
+
+def RButton(event):
+    global rbutton_down, shift_pressed
+    if not event.Injected and is_in_fusion():
+        log('rdown event.Injected and inFusion')
+        rbutton_down = True
+        detect_move(True)
+        shift_pressed = ahk.GetKeyState('VK_LSHIFT')
+
+    if switchRMB_MMB:
+        if not event.Injected and is_in_fusion():
+            fire_in(ahk.MDown, 10)
+            return False
+        return True
+    else:
+        return RButton1(event)
+
+def RButtonup(event):
+    global rbutton_down
+    if not event.Injected:
+        detect_move(False)
+
+    if rbutton_down:
+        rbutton_down = False
+
+        if not event.Injected and not move_detected:
+            log('no move, shift_pressed: ' + str(shift_pressed))
+            if not shift_pressed:
+                log('no move, no shift. Show RMB menu')
+                ahk.block_mouse_move(True)
+                ahk.MUp()
+                ahk.RDown()
+                fire_in(ahk.RUp, 50)
+                fire_in(ahk.block_mouse_move, 300, {False})
+        
+        if switchRMB_MMB:
+            if not event.Injected and is_in_fusion():
+                log('rup event.Injected and inFusion')
+                fire_in(ahk.MUp, 10)
+                return False
+            return True
+        else:
+            return RButtonup1(event)
+    else:
+        return True
+
+def MButton(event):
+    global shift_pressed, mbutton_down
+    if not event.Injected and is_in_fusion():
+        mbutton_down = True
+        detect_move(True)
+        shift_pressed = ahk.GetKeyState('VK_LSHIFT')
+        
+    if switchRMB_MMB:
+        if not event.Injected and is_in_fusion():
+            log('mdown event.Injected and inFusion')
+            return RButton1(event)
+        else:
+            return True
+    else:
+        return True
+
+def MButtonup(event):
+    global rbutton_down, mbutton_down
+
+    if not event.Injected:
+        detect_move(False)
+
+    if mbutton_down:
+        mbutton_down = False
+
+        if switchRMB_MMB:
+            if not event.Injected and is_in_fusion():
+                log('mup event.Injected and inFusion')
+                ret = RButtonup1(event)
+                rbutton_down = False
+                return ret
+            else:
+                return True
+        else:
+            return True
+    else:
+        return True
 
 ui = None
 try:
@@ -187,6 +258,9 @@ try:
         log('hook RMB')
         ahk.setOnRButton(RButton)
         ahk.setOnRButtonUp(RButtonup)
+        log('hook MMB')
+        ahk.setOnMButton(MButton)
+        ahk.setOnMButtonUp(MButtonup)
         ahk.hookMouse()
 
         # start hiddent Tk window to pump event
