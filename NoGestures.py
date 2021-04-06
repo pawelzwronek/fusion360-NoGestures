@@ -8,6 +8,7 @@
 # v1.2 - build for python 3.7
 # v1.3 - fix for Fusion360 v2.0.8609 - June 2020 Update
 # v1.4-beta - add switchRMB_MMB bool to remap RMB as MMB and MMB as RMB
+# v1.5 - fix for Fusion360 2.0.10027 - April 2021 Update
 
 import math
 import threading
@@ -101,9 +102,9 @@ shift_pressed = False
 
 
 def is_in_fusion():
-    className = ahk.getClassUnderMouse()
-    log('className: ' + str(className))
-    return className == 'Qt5QWindowIcon:Fusion360'
+    className = str(ahk.getClassUnderMouse())
+    log('className: ' + className)
+    return 'QWindowIcon:Fusion360' in className or 'AcApCoreView' in className
 
 
 def detect_move(start=-1):
