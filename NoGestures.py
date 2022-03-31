@@ -9,6 +9,7 @@
 # v1.3 - fix for Fusion360 v2.0.8609 - June 2020 Update
 # v1.4-beta - add switchRMB_MMB bool to remap RMB as MMB and MMB as RMB
 # v1.5 - fix for Fusion360 2.0.10027 - April 2021 Update
+# v1.6 - fix for Fusion360 2.0.12665 - March 2022 Update
 
 import math
 import threading
