@@ -10,6 +10,8 @@
 # v1.4-beta - add switchRMB_MMB bool to remap RMB as MMB and MMB as RMB
 # v1.5 - fix for Fusion360 2.0.10027 - April 2021 Update
 # v1.6 - fix for Fusion360 2.0.12665 - March 2022 Update
+# v1.7 - fix for Fusion360 2.0.17244 - September 2023 Update
+#      - python changed to 3.11
 
 import math
 import threading
@@ -62,7 +64,7 @@ fromFusion = __name__ != '__main__'
 log('fromFusion: ' + str(fromFusion))
 
 # find Fusion python interpreter
-pyt = os.path.join(os.path.split(os.__file__)[0], '..\\python')
+pyt = os.path.join(os.path.split(tk.__file__)[0], '..\\..\\python')
 log('exe: ' + pyt)
 
 # if executed directly from Fusion run this script as a subprocess to avoid

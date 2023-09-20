@@ -1,6 +1,6 @@
 @prompt $g
 
-set dst="bundle v1.6"
+set dst="bundle v1.7"
 
 rmdir /S /Q %dst%
 mkdir %dst%
