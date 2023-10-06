@@ -1,0 +1,1 @@
+No private data is collected/stored/send.
