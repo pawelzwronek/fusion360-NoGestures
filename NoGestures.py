@@ -12,6 +12,9 @@
 # v1.6 - fix for Fusion360 2.0.12665 - March 2022 Update
 # v1.7 - fix for Fusion360 2.0.17244 - September 2023 Update
 #      - python changed to 3.11
+# v1.8 - fix for Fusion360 2.0.20256
+#      - python changed to 3.12
+#      - update SWIG to v4.2.0
 
 import math
 import threading
@@ -36,7 +39,7 @@ if len(sys.argv) > 1:
 
 print(boot)
 
-# Logfile 
+# Logfile
 _tmpPath =None
 
 
@@ -154,7 +157,7 @@ def RButtonup1(event):
         if not event.Injected:
             if rmbAsOrbit or switchRMB_MMB:
                 ahk.SetKeyState('VK_LSHIFT', False) # release SHIFT key
-            
+
             if move_detected:
                 fire_in(ahk.MUp, 50)
             else:
@@ -206,7 +209,7 @@ def RButtonup(event):
                 ahk.RDown()
                 fire_in(ahk.RUp, 50)
                 fire_in(ahk.block_mouse_move, 300, {False})
-        
+
         if switchRMB_MMB:
             if not event.Injected and is_in_fusion():
                 log('rup event.Injected and inFusion')
@@ -224,7 +227,7 @@ def MButton(event):
         mbutton_down = True
         detect_move(True)
         shift_pressed = ahk.GetKeyState('VK_LSHIFT')
-        
+
     if switchRMB_MMB:
         if not event.Injected and is_in_fusion():
             log('mdown event.Injected and inFusion')

@@ -2,7 +2,6 @@
 %include typemaps.i
 
 %{
-  #define _WIN32_WINNT 0x400
   #include "windows.h"
 
   PyObject* callback_funcs[WH_MAX];
@@ -22,7 +21,6 @@
 %init %{
   memset(callback_funcs, 0, WH_MAX * sizeof(PyObject*));
   memset(hHooks, 0, WH_MAX * sizeof(HHOOK));
-  PyEval_InitThreads();
 %}
 
 %wrapper %{
@@ -103,7 +101,7 @@
     }
 
     if(!hHooks[idHook]) {
-      PyErr_SetString(PyExc_TypeError, "Could not set hook");
+      PyErr_SetString(PyExc_TypeError,hMod == NULL ? "Could not set hook NULL" : "Could not set hook not NULL");
     }
     
     SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS); //HIGH_PRIORITY_CLASS

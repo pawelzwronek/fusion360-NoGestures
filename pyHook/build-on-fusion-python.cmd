@@ -4,8 +4,8 @@ rem         elif msc_ver == '1916':
 rem            # VS2010 / MSVC 10.0
 rem            return ['msvcr100']
 
-set PYTHONDIR=C:\Users\p\AppData\Local\Autodesk\webdeploy\production\1b7b241a4d7e74709532875784c66d9a6c8030aa\Python
-set PATH=%PATH%;C:\temp\swigwin-4.0.1
+set PYTHONDIR=C:\Users\p\AppData\Local\Autodesk\webdeploy\production\06fdec045fd75975b505ab1dcbd568595c1cf626\Python
+set PATH=%PATH%;C:\temp\swigwin-4.2.0
 set PATH=c:\msys64\mingw64\bin\;%PATH%
 set PATH=c:\Users\p\AppData\Local\Programs\Python\Python311;%PATH%
 
@@ -14,5 +14,6 @@ rm *.pyd
 
 xcopy /S /Y /Q c:\Users\p\AppData\Local\Programs\Python\Python311\include %PYTHONDIR%\include\
 xcopy /S /Y /Q c:\Users\p\AppData\Local\Programs\Python\Python311\libs %PYTHONDIR%\libs\
+%PYTHONDIR%\python.exe -m pip install setuptools
 %PYTHONDIR%\python.exe setup.py build -cmingw32
-copy build\lib.win-amd64-cpython-311\pyHook\*.pyd .\
+copy build\lib.win-amd64-cpython-312\pyHook\*.pyd .\
