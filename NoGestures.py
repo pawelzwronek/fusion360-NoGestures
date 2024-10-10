@@ -44,7 +44,7 @@ _tmpPath =None
 
 
 def log(msg):
-    global boot, _tmpPath, logToConsole, logToFile
+    global _tmpPath
     if logToFile or logToConsole:
         fracSecs = time.time()
         fracSecs = int((fracSecs - int(fracSecs))*1000)

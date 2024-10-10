@@ -4,10 +4,6 @@ except:
     from . import cpyHook
 
 
-def GetKeyState(key_id):
-    return cpyHook.cGetKeyState(key_id)
-
-
 class HookConstants:
     '''
     Stores internal windows hook constants including hook types, mappings from virtual

@@ -8,7 +8,6 @@ mkdir %dst%\pyHook
 mkdir %dst%\icons
 
 copy pyHook\__init__.py  %dst%\pyHook
-copy pyHook\*.pyd  %dst%\pyHook
 copy pyHook\cpyHook.py  %dst%\pyHook
 copy pyHook\HookManager.py  %dst%\pyHook
 copy pyHook\LICENSE.txt  %dst%\pyHook
