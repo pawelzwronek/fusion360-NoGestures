@@ -1,6 +1,6 @@
 try:
     import cpyHook
-except:
+except ImportError:
     from . import cpyHook
 
 
@@ -86,7 +86,7 @@ class HookConstants:
                 'VK_LAUNCH_APP2': 0xB7, 'VK_OEM_1': 0xBA, 'VK_OEM_PLUS': 0xBB, 'VK_OEM_COMMA': 0xBC,
                 'VK_OEM_MINUS': 0xBD,
                 'VK_OEM_PERIOD': 0xBE, 'VK_OEM_2': 0xBF, 'VK_OEM_3': 0xC0, 'VK_OEM_4': 0xDB, 'VK_OEM_5': 0xDC,
-                'VK_OEM_6': 0xDD, 'VK_OEM_7': 0xDE, 'VK_OEM_8': 0xDF, 'VK_OEM_102': 0xE2, 'VK_PROCESSKEY': 0xE5,
+                'VK_OEM_6': 0xDD, 'VK_OEM_7': 0xDE, 'VK_OEM_8': 0xDF, 'VK_OEM_102': 0xE2,
                 'VK_PACKET': 0xE7}
 
     # inverse mapping of keycodes
@@ -216,12 +216,12 @@ class KeyboardEvent(HookEvent):
     @type Ascii: string
     '''
 
-    def __init__(self, msg, vk_code, scan_code, ascii, flags, time, hwnd, window_name):
+    def __init__(self, msg, vk_code, scan_code, ascii_code, flags, time, hwnd, window_name):
         '''Initializes an instances of the class.'''
         HookEvent.__init__(self, msg, time, hwnd, window_name)
         self.KeyID = vk_code
         self.ScanCode = scan_code
-        self.Ascii = ascii
+        self.Ascii = ascii_code
         self.flags = flags
 
     def GetKey(self):
@@ -341,7 +341,7 @@ class HookManager(object):
         else:
             return True
 
-    def KeyboardSwitch(self, msg, vk_code, scan_code, ascii, flags, time, hwnd, win_name):
+    def KeyboardSwitch(self, msg, vk_code, scan_code, ascii_code, flags, time, hwnd, win_name):
         '''
         Passes a keyboard event on to the appropriate handler if one is registered.
 
@@ -360,7 +360,7 @@ class HookManager(object):
         @param hwnd: Window handle of the foreground window at the time of the event
         @type hwnd: integer
         '''
-        event = KeyboardEvent(msg, vk_code, scan_code, ascii, flags, time, hwnd, win_name)
+        event = KeyboardEvent(msg, vk_code, scan_code, ascii_code, flags, time, hwnd, win_name)
         func = self.keyboard_funcs.get(msg)
         if func:
             return func(event)
@@ -657,7 +657,7 @@ class HookManager(object):
     KeyChar = property(fset=SubscribeKeyChar)
     KeyAll = property(fset=SubscribeKeyAll)
 
-    def connect(self, switch, id, func):
+    def connect(self, switch, hook_id, func):
         '''
         Registers a callback to the given function for the event with the given ID in the
         provided dictionary. Internal use only.
@@ -669,9 +669,9 @@ class HookManager(object):
         @param func: Callback function
         @type func: callable
         '''
-        switch[id] = func
+        switch[hook_id] = func
 
-    def disconnect(self, switch, id):
+    def disconnect(self, switch, hook_id):
         '''
         Unregisters a callback for the event with the given ID in the provided dictionary.
         Internal use only.
@@ -682,6 +682,6 @@ class HookManager(object):
         @type id: integer
         '''
         try:
-            del switch[id]
-        except:
+            del switch[hook_id]
+        except KeyError:
             pass

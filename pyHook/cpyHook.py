@@ -3,6 +3,11 @@ import datetime
 import ctypes
 from ctypes import wintypes
 
+_tmpPath = "C:\\temp\\fusionlog_cpyHook.log"
+logToFile = False
+logToConsole = False
+
+
 user32 = ctypes.windll.user32
 kernel32 = ctypes.windll.kernel32
 
@@ -33,6 +38,9 @@ SetWindowsHookExW.restype = wintypes.HHOOK
 GetModuleHandleW = kernel32.GetModuleHandleW
 GetModuleHandleW.restype = ctypes.c_uint64
 
+UnhookWindowsHookEx = user32.UnhookWindowsHookEx
+UnhookWindowsHookEx.argtypes = [wintypes.HHOOK]
+
 class POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
@@ -42,20 +50,14 @@ class MSLLHOOKSTRUCT(ctypes.Structure):
                 ("flags", ctypes.c_ulong),
                 ("time", ctypes.c_ulong),
                 ("dwExtraInfo", ctypes.POINTER(ctypes.c_ulong))]
+casted_l_param = ctypes.POINTER(MSLLHOOKSTRUCT)
 
-UnhookWindowsHookEx = user32.UnhookWindowsHookEx
-UnhookWindowsHookEx.argtypes = [wintypes.HHOOK]
-
-
-_tmpPath = "C:\\temp\\fusionlog_cpyHook.log"
-logToFile = False
-logToConsole = True
 
 def log(msg):
-    if logToConsole or not logToFile:
+    if logToConsole or logToFile:
         fracSecs = time.time()
-        fracSecs = int((fracSecs - int(fracSecs))*1000)
-        msg = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.{:03}:".format(fracSecs)) + ' ' + str(msg)
+        fracSecs = int((fracSecs - int(fracSecs)) * 1000)
+        msg = f"{datetime.datetime.now().strftime(f'%Y-%m-%d %H:%M:%S.{fracSecs:03}:')} {msg}"
 
         if logToConsole:
             print(msg)
@@ -66,10 +68,9 @@ def log(msg):
 
 def cLLMouseCallback(code, wParam, lParam):
     if code >= 0:
-        ms = ctypes.cast(lParam, ctypes.POINTER(MSLLHOOKSTRUCT)).contents
+        ms = ctypes.cast(lParam, casted_l_param).contents
 
         args = (wParam, ms.pt.x, ms.pt.y, ms.mouseData, ms.flags, ms.time, None, None)
-        # print(args)
 
         pyfunc = callback_funcs[WH_MOUSE_LL]
         if pyfunc is not None:
@@ -102,7 +103,13 @@ def cSetHook(idHook, pyfunc):
 
     # Set process priority
     REALTIME_PRIORITY_CLASS = 256 # win32con.REALTIME_PRIORITY_CLASS
-    ctypes.windll.kernel32.SetPriorityClass(ctypes.windll.kernel32.GetCurrentProcess(), REALTIME_PRIORITY_CLASS)
+    SetPriorityClass = ctypes.windll.kernel32.SetPriorityClass
+    SetPriorityClass.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+    SetPriorityClass.restype = wintypes.BOOL
+    GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
+    GetCurrentProcess.argtypes = []
+    GetCurrentProcess.restype = wintypes.HANDLE
+    SetPriorityClass(GetCurrentProcess(), REALTIME_PRIORITY_CLASS)
 
     return True
 

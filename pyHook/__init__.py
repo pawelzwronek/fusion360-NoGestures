@@ -1,4 +1,4 @@
 try:
     from HookManager import *
-except:
+except ImportError:
     from .HookManager import *

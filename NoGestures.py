@@ -15,6 +15,9 @@
 # v1.8 - fix for Fusion360 2.0.20256
 #      - python changed to 3.12
 #      - update SWIG to v4.2.0
+# v2.0 - fix hung up on rapid RMB clicks
+#      - better RMB response
+#      - pure python implementation, no SWIG binaries
 
 import math
 import threading
@@ -25,6 +28,8 @@ import datetime
 import traceback
 import tkinter as tk
 import time
+
+# pylint: disable=W0603
 
 rmbAsOrbit = False # exclusive with switchRMB_MMB
 switchRMB_MMB = False  # exclusive with rmbAsOrbit
@@ -42,26 +47,25 @@ print(boot)
 # Logfile
 _tmpPath =None
 
+pid = os.getpid()
 
 def log(msg):
     global _tmpPath
     if logToFile or logToConsole:
         fracSecs = time.time()
         fracSecs = int((fracSecs - int(fracSecs))*1000)
-        msg = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.{:03}:".format(fracSecs)) + boot + ' ' + str(msg)
+        msg = f"{datetime.datetime.now().strftime(f'%Y-%m-%d %H:%M:%S.{fracSecs:03}')} {boot}({pid}): {msg}"
         if logToConsole:
             print(msg, flush=True)
         if logToFile:
             if not _tmpPath:
-                import tempfile
+                import tempfile # pylint: disable=C0415
                 with tempfile.NamedTemporaryFile(mode='w', delete=False, prefix='NoGestures_', suffix='.log') as tmpFile:
                     if tmpFile and tmpFile.file and tmpFile.name:
                         _tmpPath = tmpFile.name
             if _tmpPath:
-                with open(_tmpPath, 'a') as f:
+                with open(_tmpPath, 'a', encoding='utf-8') as f:
                     f.write(msg + '\n')
-        # with open("C:\\temp\\fusionlog.log", "a", buffering=1) as f:
-            # f.write((msg + '\n'))
 
 fromFusion = __name__ != '__main__'
 log('fromFusion: ' + str(fromFusion))
@@ -85,7 +89,7 @@ try:
         from . import autohotkey as ahk
     else:
         import autohotkey as ahk
-except Exception as ex:
+except ImportError as ex:
     log(traceback.format_exc())
 
 # ==================================+++++++++++++++++===================================================================
@@ -93,7 +97,7 @@ except Exception as ex:
 
 def fire_in(func, time_ms, ars=None):
     log('fire in ' + str(time_ms) + ' ' + str(func.__name__) + '(' + str(ars) + ')')
-    threading.Timer(time_ms/1000, func, ars).start()
+    threading.Timer(time_ms/1000, func, args=ars).start()
 
 xpos = 0
 ypos = 0
@@ -137,7 +141,7 @@ def RButton1(event):
     try:
         if not event.Injected:
             if is_in_fusion():
-                log('rdown inFusion')
+                log('rdown not injected')
                 fire_in(ahk.MDown, 20)
                 if rmbAsOrbit or switchRMB_MMB:
                     if not shift_pressed:
@@ -145,9 +149,9 @@ def RButton1(event):
                     else:
                         fire_in(ahk.MUp, 30)
                 return False  # block event
-            else:
-                log('rdown ')
-    except Exception:
+
+            log('rdown not inFusion')
+    except Exception: # pylint: disable=W0703
         log(traceback.format_exc())
     return True  # pass event to next hook
 
@@ -155,6 +159,7 @@ def RButton1(event):
 def RButtonup1(event):
     try:
         if not event.Injected:
+            log('rup1 not injected')
             if rmbAsOrbit or switchRMB_MMB:
                 ahk.SetKeyState('VK_LSHIFT', False) # release SHIFT key
 
@@ -171,31 +176,36 @@ def RButtonup1(event):
                     fire_in(ahk.MUp, 20)
 
             return False  # block event
-    except Exception:
+    except Exception: # pylint: disable=W0703
         log(traceback.format_exc())
+    log('rup1 injected')
     return True  # pass event to next hook
 
 
 def RButton(event):
     global rbutton_down, shift_pressed
     if not event.Injected and is_in_fusion():
-        log('rdown event.Injected and inFusion')
+        log('rdown not injected')
         rbutton_down = True
         detect_move(True)
         shift_pressed = ahk.GetKeyState('VK_LSHIFT')
 
-    if switchRMB_MMB:
-        if not event.Injected and is_in_fusion():
+        if switchRMB_MMB:
             fire_in(ahk.MDown, 10)
             return False
+
+    if switchRMB_MMB:
         return True
-    else:
-        return RButton1(event)
+
+    return RButton1(event)
 
 def RButtonup(event):
     global rbutton_down
     if not event.Injected:
+        log('rup not injected')
         detect_move(False)
+    else:
+        log('rup injected')
 
     if rbutton_down:
         rbutton_down = False
@@ -205,21 +215,20 @@ def RButtonup(event):
             if not shift_pressed:
                 log('no move, no shift. Show RMB menu')
                 ahk.block_mouse_move(True)
-                ahk.MUp()
-                ahk.RDown()
-                fire_in(ahk.RUp, 50)
-                fire_in(ahk.block_mouse_move, 300, {False})
+                fire_in(ahk.MUp, 0)
+                fire_in(ahk.RDown, 10)
+                fire_in(ahk.RUp, 100)
+                fire_in(ahk.block_mouse_move, 120, {False})
 
         if switchRMB_MMB:
             if not event.Injected and is_in_fusion():
-                log('rup event.Injected and inFusion')
+                log('rup not event.Injected and inFusion')
                 fire_in(ahk.MUp, 10)
                 return False
             return True
-        else:
-            return RButtonup1(event)
-    else:
-        return True
+
+        return RButtonup1(event)
+    return True
 
 def MButton(event):
     global shift_pressed, mbutton_down
@@ -230,7 +239,7 @@ def MButton(event):
 
     if switchRMB_MMB:
         if not event.Injected and is_in_fusion():
-            log('mdown event.Injected and inFusion')
+            log('mdown not event.Injected and inFusion')
             return RButton1(event)
         else:
             return True
@@ -248,16 +257,12 @@ def MButtonup(event):
 
         if switchRMB_MMB:
             if not event.Injected and is_in_fusion():
-                log('mup event.Injected and inFusion')
+                log('mup not injected and inFusion')
                 ret = RButtonup1(event)
                 rbutton_down = False
                 return ret
-            else:
-                return True
-        else:
-            return True
-    else:
-        return True
+
+    return True
 
 ui = None
 try:
@@ -276,34 +281,30 @@ try:
         log('mainloop starting...')
         root.mainloop()
         log('mainloop ended')
-except Exception:
+except Exception: # pylint: disable=W0703
     log(traceback.format_exc())
 
 
-# fusion callback
-def run(context):
-    global fromFusion, process, ui
+# Fusion callback
+def run(_context):
     log('run')
     if process is not None:
         log('bootstrap')
-    # try:
-    #     app = adsk.core.Application.get()
-    #     ui = app.userInterface
-    #     # ui.messageBox('run')
-    # except:
-    #     if ui:
-    #         ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
 
-# fusion callback
-def stop(context):
-    global process, ui
+def process_terminate():
+    process.terminate()
+
+# Fusion callback
+def stop(_context):
     log('stop')
     if ui is not None:
         ui.messageBox('stop')
     if process is not None:
-        log('terminate...')
-        process.terminate()
+        log(f'kill {process.pid}')
+        fire_in(process_terminate, 1)
+        time.sleep(0.1)
+        log('process killed')
 
 
 if not fromFusion and boot == 'boot':
