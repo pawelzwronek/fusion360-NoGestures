@@ -18,6 +18,7 @@
 # v2.0 - fix hung up on rapid RMB clicks
 #      - better RMB response
 #      - pure python implementation, no SWIG binaries
+# v2.1 - fix not starting when there is a space character in user name
 
 import math
 import threading
@@ -30,6 +31,9 @@ import tkinter as tk
 import time
 
 # pylint: disable=W0603
+
+VERSION = '2.1'
+APP_NAME = 'NoGestures'
 
 rmbAsOrbit = False # exclusive with switchRMB_MMB
 switchRMB_MMB = False  # exclusive with rmbAsOrbit
@@ -60,12 +64,14 @@ def log(msg):
         if logToFile:
             if not _tmpPath:
                 import tempfile # pylint: disable=C0415
-                with tempfile.NamedTemporaryFile(mode='w', delete=False, prefix='NoGestures_', suffix='.log') as tmpFile:
+                with tempfile.NamedTemporaryFile(mode='w', delete=False, prefix=APP_NAME + '_', suffix='.log') as tmpFile:
                     if tmpFile and tmpFile.file and tmpFile.name:
                         _tmpPath = tmpFile.name
             if _tmpPath:
                 with open(_tmpPath, 'a', encoding='utf-8') as f:
                     f.write(msg + '\n')
+
+log(APP_NAME + ' v' + VERSION + ' started')
 
 fromFusion = __name__ != '__main__'
 log('fromFusion: ' + str(fromFusion))
@@ -75,13 +81,14 @@ pyt = os.path.join(os.path.split(tk.__file__)[0], '..\\..\\python')
 log('exe: ' + pyt)
 
 # if executed directly from Fusion run this script as a subprocess to avoid
-# lags in mouse events coused by Fusion's python loop
+# lags in mouse events caused by Fusion's python loop
 process = None
 if len(sys.argv) == 1:
     si = subprocess.STARTUPINFO()
     si.dwFlags |= subprocess.STARTF_USESHOWWINDOW | subprocess.CREATE_NEW_PROCESS_GROUP  # hide console window
-    log('running subprocess: ' + pyt + ' ' + __file__ + ' main')
-    process = subprocess.Popen(pyt + ' ' + __file__ + ' main', startupinfo=si)
+    args = [pyt, __file__, 'main']
+    log('running subprocess: ' + str(args))
+    process = subprocess.Popen(args, startupinfo=si)
 
 
 try:
